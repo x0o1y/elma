@@ -69,11 +69,16 @@ the original arrow controls:
 ```text
 I  throttle
 K  brake
+E  brake alias
 J  rotate left
 L  rotate right
+;  alovolt
 Space  turn
 P  screenshot
 ```
 
 The mapping uses physical SDL scancodes, so it is independent of the active
 keyboard input language. Text entry continues to receive the typed letters.
+Menus use the same `I/K/J/L` navigation cluster, `F` confirms, `Q` escapes and
+`D` deletes. Shift inserts those letters literally, following Keyamp
+command-mode behavior.

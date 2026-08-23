@@ -22,6 +22,7 @@ std::array<unsigned char*, 480> rows;
 std::array<uint32_t, 640 * 480> rgba;
 std::array<uint32_t, 256> palette;
 std::array<BYTE, 256> keys;
+std::array<unsigned int, 256> key_counts;
 std::deque<int> chars;
 bool locked = false;
 bool running = true;
@@ -37,19 +38,16 @@ int dik(SDL_Scancode code) {
     case SDL_SCANCODE_9: return DIK_9; case SDL_SCANCODE_0: return DIK_0;
     case SDL_SCANCODE_A: return DIK_A; case SDL_SCANCODE_B: return DIK_B;
     case SDL_SCANCODE_C: return DIK_C; case SDL_SCANCODE_D: return DIK_D;
-    case SDL_SCANCODE_E: return DIK_E; case SDL_SCANCODE_F: return DIK_F;
+    case SDL_SCANCODE_E: return DIK_DOWN; case SDL_SCANCODE_F: return DIK_F;
     case SDL_SCANCODE_G: return DIK_G; case SDL_SCANCODE_H: return DIK_H;
-    // Keyamp movement cluster.  Keep the original arrow controls as aliases,
-    // while placing all four continuous bike controls under the right hand.
     case SDL_SCANCODE_I: return DIK_UP;
     case SDL_SCANCODE_J: return DIK_LEFT;
     case SDL_SCANCODE_K: return DIK_DOWN;
     case SDL_SCANCODE_L: return DIK_RIGHT;
     case SDL_SCANCODE_M: return DIK_M; case SDL_SCANCODE_N: return DIK_N;
     case SDL_SCANCODE_O: return DIK_O;
-    // I is throttle in Keyamp, so P takes over its legacy screenshot binding.
     case SDL_SCANCODE_P: return DIK_I;
-    case SDL_SCANCODE_Q: return DIK_Q; case SDL_SCANCODE_R: return DIK_R;
+    case SDL_SCANCODE_Q: return DIK_ESCAPE; case SDL_SCANCODE_R: return DIK_R;
     case SDL_SCANCODE_S: return DIK_S; case SDL_SCANCODE_T: return DIK_T;
     case SDL_SCANCODE_U: return DIK_U; case SDL_SCANCODE_V: return DIK_V;
     case SDL_SCANCODE_W: return DIK_W; case SDL_SCANCODE_X: return DIK_X;
@@ -81,8 +79,22 @@ int dik(SDL_Scancode code) {
 
 int character(const SDL_KeyboardEvent& event) {
     const SDL_Keycode key = event.keysym.sym;
-    if (key >= SDLK_a && key <= SDLK_z)
+    if (key >= SDLK_a && key <= SDLK_z) {
+        if (!(event.keysym.mod & KMOD_SHIFT)) {
+            switch (key) {
+            case SDLK_i: return MK_UP;
+            case SDLK_k: return MK_DOWN;
+            case SDLK_j: return MK_LEFT;
+            case SDLK_l: return MK_RIGHT;
+            case SDLK_f: return MK_ENTER;
+            case SDLK_d: return MK_BACKSPACE;
+            case SDLK_q: return MK_ESC;
+            default: break;
+            }
+        }
+        // As in Keyamp command mode, Shift inserts the literal letter.
         return (event.keysym.mod & KMOD_SHIFT) ? key - SDLK_a + 'A' : key;
+    }
     if (key >= SDLK_0 && key <= SDLK_9) return key;
     switch (key) {
     case SDLK_ESCAPE: return MK_ESC; case SDLK_RETURN: return MK_ENTER;
@@ -100,8 +112,28 @@ void events() {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) running = false;
         if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-            const int code = dik(event.key.keysym.scancode);
-            if (code) keys[code] = event.type == SDL_KEYDOWN ? 0x80 : 0;
+            const bool down = event.type == SDL_KEYDOWN;
+            if (!event.key.repeat) {
+                const int code = dik(event.key.keysym.scancode);
+                if (code) {
+                    if (down)
+                        key_counts[code]++;
+                    else if (key_counts[code])
+                        key_counts[code]--;
+                    keys[code] = key_counts[code] ? 0x80 : 0;
+                }
+                // Alovolt is one physical key holding both rotate states.
+                if (event.key.keysym.scancode == SDL_SCANCODE_SEMICOLON) {
+                    const int volts[] = { DIK_LEFT, DIK_RIGHT };
+                    for (int volt : volts) {
+                        if (down)
+                            key_counts[volt]++;
+                        else if (key_counts[volt])
+                            key_counts[volt]--;
+                        keys[volt] = key_counts[volt] ? 0x80 : 0;
+                    }
+                }
+            }
             if (event.type == SDL_KEYDOWN && !event.key.repeat) {
                 const int c = character(event.key);
                 if (c) chars.push_back(c);
@@ -184,7 +216,7 @@ ddpal::ddpal(unsigned char* colors) {
 ddpal::~ddpal() { delete static_cast<std::array<uint32_t, 256>*>(pddpal); }
 void ddpal::set() { palette = *static_cast<std::array<uint32_t, 256>*>(pddpal); }
 
-void mk_init() { keys.fill(0); chars.clear(); }
+void mk_init() { keys.fill(0); key_counts.fill(0); chars.clear(); }
 int mk_getextchar() { while (chars.empty()) { mv_check(); SDL_Delay(1); } int c = chars.front(); chars.pop_front(); return c; }
 void mk_emptychar() { events(); chars.clear(); }
 int mk_kbhit() { events(); return !chars.empty(); }
