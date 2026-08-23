@@ -39,10 +39,16 @@ int dik(SDL_Scancode code) {
     case SDL_SCANCODE_C: return DIK_C; case SDL_SCANCODE_D: return DIK_D;
     case SDL_SCANCODE_E: return DIK_E; case SDL_SCANCODE_F: return DIK_F;
     case SDL_SCANCODE_G: return DIK_G; case SDL_SCANCODE_H: return DIK_H;
-    case SDL_SCANCODE_I: return DIK_I; case SDL_SCANCODE_J: return DIK_J;
-    case SDL_SCANCODE_K: return DIK_K; case SDL_SCANCODE_L: return DIK_L;
+    // Keyamp movement cluster.  Keep the original arrow controls as aliases,
+    // while placing all four continuous bike controls under the right hand.
+    case SDL_SCANCODE_I: return DIK_UP;
+    case SDL_SCANCODE_J: return DIK_LEFT;
+    case SDL_SCANCODE_K: return DIK_DOWN;
+    case SDL_SCANCODE_L: return DIK_RIGHT;
     case SDL_SCANCODE_M: return DIK_M; case SDL_SCANCODE_N: return DIK_N;
-    case SDL_SCANCODE_O: return DIK_O; case SDL_SCANCODE_P: return DIK_P;
+    case SDL_SCANCODE_O: return DIK_O;
+    // I is throttle in Keyamp, so P takes over its legacy screenshot binding.
+    case SDL_SCANCODE_P: return DIK_I;
     case SDL_SCANCODE_Q: return DIK_Q; case SDL_SCANCODE_R: return DIK_R;
     case SDL_SCANCODE_S: return DIK_S; case SDL_SCANCODE_T: return DIK_T;
     case SDL_SCANCODE_U: return DIK_U; case SDL_SCANCODE_V: return DIK_V;

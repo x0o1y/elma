@@ -18,7 +18,8 @@ https://elastomania.com
 
 This fork adds a native Apple Silicon macOS backend using SDL2. It builds the
 original game and physics code as a Mach-O arm64 executable; Wine and DOSBox
-are not involved.
+are not involved. The default build selects the original shareware profile to
+match the freely distributable game data.
 
 ### Dependencies
 
@@ -59,3 +60,20 @@ Run the executable from the repository root so it can find the data:
 
 The current macOS backend provides native video, keyboard, mouse and timing.
 Audio is temporarily disabled.
+
+### Keyamp controls
+
+The macOS backend adds a right-hand Keyamp movement cluster without removing
+the original arrow controls:
+
+```text
+I  throttle
+K  brake
+J  rotate left
+L  rotate right
+Space  turn
+P  screenshot
+```
+
+The mapping uses physical SDL scancodes, so it is independent of the active
+keyboard input language. Text entry continues to receive the typed letters.

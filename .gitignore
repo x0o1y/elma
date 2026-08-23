@@ -1,6 +1,6 @@
 /build*/
 /elma.res
-/state.dat
+/state*.dat
 /readme.txt
 /files.inf
 /lev/

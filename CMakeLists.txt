@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(elma_classic LANGUAGES CXX)
+project(elma LANGUAGES CXX)
+
+option(ELMA_SHAREWARE "Build for the freely distributable shareware data" ON)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
@@ -22,4 +24,7 @@ add_executable(elma ${ELMA_CORE} F_MAC/MAC_PLATFORM.CPP)
 target_include_directories(elma PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(elma PRIVATE PkgConfig::SDL2)
 target_compile_options(elma PRIVATE -fpermissive)
+if(ELMA_SHAREWARE)
+    target_compile_definitions(elma PRIVATE SARVARI)
+endif()
 set_target_properties(elma PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
