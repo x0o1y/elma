@@ -110,6 +110,7 @@ I        throttle
 K        brake
 J        rotate left
 L        rotate right
+H        supervolt (right, then both rotations)
 ;        alovolt
 Space    turn
 ```

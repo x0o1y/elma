@@ -26,7 +26,17 @@ std::array<unsigned int, 256> key_counts;
 std::deque<int> chars;
 bool locked = false;
 bool running = true;
+bool supervolt_pending = false;
+bool supervolt_left = false;
 std::chrono::steady_clock::time_point stopper_start;
+
+void key_state(int code, bool down) {
+    if (down)
+        key_counts[code]++;
+    else if (key_counts[code])
+        key_counts[code]--;
+    keys[code] = key_counts[code] ? 0x80 : 0;
+}
 
 int dik(SDL_Scancode code) {
     switch (code) {
@@ -116,22 +126,21 @@ void events() {
             if (!event.key.repeat) {
                 const int code = dik(event.key.keysym.scancode);
                 if (code) {
-                    if (down)
-                        key_counts[code]++;
-                    else if (key_counts[code])
-                        key_counts[code]--;
-                    keys[code] = key_counts[code] ? 0x80 : 0;
+                    key_state(code, down);
+                }
+                // Let the physics see a normal right volt before adding left.
+                if (event.key.keysym.scancode == SDL_SCANCODE_H) {
+                    key_state(DIK_RIGHT, down);
+                    if (!down && supervolt_left)
+                        key_state(DIK_LEFT, false);
+                    supervolt_pending = down;
+                    supervolt_left = false;
                 }
                 // Alovolt is one physical key holding both rotate states.
                 if (event.key.keysym.scancode == SDL_SCANCODE_SEMICOLON) {
                     const int volts[] = { DIK_LEFT, DIK_RIGHT };
-                    for (int volt : volts) {
-                        if (down)
-                            key_counts[volt]++;
-                        else if (key_counts[volt])
-                            key_counts[volt]--;
-                        keys[volt] = key_counts[volt] ? 0x80 : 0;
-                    }
+                    for (int volt : volts)
+                        key_state(volt, down);
                 }
             }
             if (event.type == SDL_KEYDOWN && !event.key.repeat) {
@@ -173,7 +182,7 @@ void ddinit() {
         exit(1);
     }
     window = SDL_CreateWindow("Elasto Mania", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, 640, 480,
+                              SDL_WINDOWPOS_CENTERED, 960, 720,
                               SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
@@ -216,7 +225,20 @@ ddpal::ddpal(unsigned char* colors) {
 ddpal::~ddpal() { delete static_cast<std::array<uint32_t, 256>*>(pddpal); }
 void ddpal::set() { palette = *static_cast<std::array<uint32_t, 256>*>(pddpal); }
 
-void mk_init() { keys.fill(0); key_counts.fill(0); chars.clear(); }
+void mk_init() {
+    keys.fill(0); key_counts.fill(0); chars.clear();
+    supervolt_pending = false;
+    supervolt_left = false;
+}
+
+void mac_supervolt_step() {
+    // Advance on a completed physics step, not on keyboard polling or a timer.
+    if (supervolt_pending) {
+        key_state(DIK_LEFT, true);
+        supervolt_pending = false;
+        supervolt_left = true;
+    }
+}
 int mk_getextchar() { while (chars.empty()) { mv_check(); SDL_Delay(1); } int c = chars.front(); chars.pop_front(); return c; }
 void mk_emptychar() { events(); chars.clear(); }
 int mk_kbhit() { events(); return !chars.empty(); }

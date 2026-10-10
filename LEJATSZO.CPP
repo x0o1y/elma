@@ -122,6 +122,10 @@ static void belsoresz( motorst* pmot, jatekosopciok* popciok,
 		ugrik2 );
 
 	int eredmeny = vizsgalat( pmot );
+	#ifdef __APPLE__
+		if( pmot == Pmot1 )
+			mac_supervolt_step();
+	#endif
 	if( eredmeny == 0 ) {
 		// Beteszunk egy 0 hangot:
 		pvalt->inf.surlero = 0;

@@ -44,6 +44,7 @@ K        brake
 E        brake alias
 J        rotate left
 L        rotate right
+H        supervolt (right, then both rotations)
 ;        alovolt
 Space    turn
 P        screenshot
@@ -66,6 +67,10 @@ Alovolt is not a timed macro. While `;` is held, both rotate states must be held
 simultaneously so the original physics code produces the move. Key aliases use
 reference counts: releasing one physical alias must not clear a logical action
 that another held key still supplies. Preserve arrow-key compatibility.
+
+Supervolt on `H` starts with right rotation and adds left after one completed
+physics step. Keep this sequence tied to physics steps, not wall-clock delays
+or the number of keyboard polls. Releasing `H` removes only its own aliases.
 
 ## Verification
 

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
+void mac_supervolt_step();
+
 typedef unsigned char BYTE;
 
 inline char* itoa(int value, char* buffer, int radix) {
